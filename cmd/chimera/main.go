@@ -9,7 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/elect0/chimera/internal/adapters/api"
 	"github.com/elect0/chimera/internal/config"
+	"github.com/elect0/chimera/internal/core/transformation"
 	"github.com/elect0/chimera/internal/logger"
 )
 
@@ -18,14 +20,28 @@ func main() {
 
 	log := logger.New(cfg.Log.Level)
 	log.Info("logger initialized", slog.String("level", cfg.Log.Level))
-	log.Info("starting chimera service")
+fmt.Println(`
+          _             _       _     _         _   _         _            _           _          
+        /\ \           / /\    / /\  /\ \      /\_\/\_\ _    /\ \         /\ \        / /\        
+       /  \ \         / / /   / / /  \ \ \    / / / / //\_\ /  \ \       /  \ \      / /  \       
+      / /\ \ \       / /_/   / / /   /\ \_\  /\ \/ \ \/ / // /\ \ \     / /\ \ \    / / /\ \      
+     / / /\ \ \     / /\ \__/ / /   / /\/_/ /  \____\__/ // / /\ \_\   / / /\ \_\  / / /\ \ \     
+    / / /  \ \_\   / /\ \___\/ /   / / /   / /\/________// /_/_ \/_/  / / /_/ / / / / /  \ \ \    
+   / / /    \/_/  / / /\/___/ /   / / /   / / /\/_// / // /____/\    / / /__\/ / / / /___/ /\ \   
+  / / /          / / /   / / /   / / /   / / /    / / // /\____\/   / / /_____/ / / /_____/ /\ \  
+ / / /________  / / /   / / /___/ / /__ / / /    / / // / /______  / / /\ \ \  / /_________/\ \ \ 
+/ / /_________\/ / /   / / //\__\/_/___\\/_/    / / // / /_______\/ / /  \ \ \/ / /_       __\ \_\
+\/____________/\/_/    \/_/ \/_________/        \/_/ \/__________/\/_/    \_\/\_\___\     /____/_/
+                                                                                                  
+		`)
+
+	transformationService := transformation.NewService(log)
+
+	apiHandler := api.NewHandler(transformationService, log)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "OK")
-	})
+	apiHandler.RegisterRoutes(mux)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.HttpSever.Port),

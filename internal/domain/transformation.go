@@ -1,4 +1,4 @@
-package transformation
+package domain
 
 type TransformationOptions struct {
 	Width   int
