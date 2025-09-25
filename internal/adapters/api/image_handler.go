@@ -3,7 +3,6 @@ package api
 import (
 	"log/slog"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -14,9 +13,15 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 	start := time.Now()
 
 	query := r.URL.Query()
+	imagePath := query.Get("path")
 	width, _ := strconv.Atoi(query.Get("width"))
 	height, _ := strconv.Atoi(query.Get("height"))
 	quality, _ := strconv.Atoi(query.Get("quality"))
+
+	if imagePath == "" {
+		http.Error(w, "invalid image path parameter", http.StatusBadRequest)
+		return
+	}
 
 	if width <= 0 {
 		http.Error(w, "invalid width parameter", http.StatusBadRequest)
@@ -29,14 +34,7 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 		Quality: quality,
 	}
 
-	imageBuffer, err := os.ReadFile("images/test.jpg")
-	if err != nil {
-		h.log.Error("failed to read image", slog.String("error", err.Error()))
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	processedImage, err := h.service.Process(r.Context(), opts, imageBuffer)
+	processedImage, err := h.service.Process(r.Context(), opts, imagePath)
 	if err != nil {
 		http.Error(w, "failed to process image", http.StatusInternalServerError)
 		return
@@ -47,4 +45,3 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 
 	h.log.Info("request processed successfully", slog.Duration("duration", time.Since(start)), slog.Int("status", http.StatusOK), slog.String("path", r.URL.Path))
 }
-

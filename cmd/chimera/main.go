@@ -10,8 +10,9 @@ import (
 	"syscall"
 
 	"github.com/elect0/chimera/internal/adapters/api"
-	"github.com/elect0/chimera/internal/config"
+	"github.com/elect0/chimera/internal/adapters/storage"
 	"github.com/elect0/chimera/internal/application/transformation"
+	"github.com/elect0/chimera/internal/config"
 	"github.com/elect0/chimera/internal/logger"
 )
 
@@ -20,7 +21,7 @@ func main() {
 
 	log := logger.New(cfg.Log.Level)
 	log.Info("logger initialized", slog.String("level", cfg.Log.Level))
-fmt.Println(`
+	fmt.Println(`
           _             _       _     _         _   _         _            _           _          
         /\ \           / /\    / /\  /\ \      /\_\/\_\ _    /\ \         /\ \        / /\        
        /  \ \         / / /   / / /  \ \ \    / / / / //\_\ /  \ \       /  \ \      / /  \       
@@ -35,7 +36,14 @@ fmt.Println(`
                                                                                                   
 		`)
 
-	transformationService := transformation.NewService(log)
+	originRepo, err := storage.NewS3OriginRepository(context.Background(), cfg, log)
+	if err != nil {
+		log.Error("failed to create S3 origin repository", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	log.Info("S3 origin repository initialized")
+
+	transformationService := transformation.NewService(log, originRepo)
 
 	apiHandler := api.NewHandler(transformationService, log)
 

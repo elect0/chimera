@@ -7,5 +7,5 @@ import (
 )
 
 type TransformationService interface {
-	Process(ctx context.Context, opts domain.TransformationOptions, imageBuffer []byte) ([]byte, error)
+	Process(ctx context.Context, opts domain.TransformationOptions, imagePath string) ([]byte, error)
 }

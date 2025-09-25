@@ -10,23 +10,31 @@ import (
 )
 
 type Service struct {
-	log *slog.Logger
+	log        *slog.Logger
+	originRepo ports.OriginRepository
 }
 
-func NewService(log *slog.Logger) *Service {
+func NewService(log *slog.Logger, originRepo ports.OriginRepository) *Service {
 	return &Service{
-		log: log,
+		log:        log,
+		originRepo: originRepo,
 	}
 }
 
-func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions, imageBuffer []byte) ([]byte, error) {
-	s.log.Debug("processing image with options", slog.Int("width", opts.Width), slog.Int("height", opts.Height))
-	
-	image := bimg.NewImage(imageBuffer)
+func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions, imagePath string) ([]byte, error) {
+	log := s.log.With(slog.String("imagePath", imagePath))
+	log.Debug("processing image request")
 
+	originalImage, err := s.originRepo.Get(ctx, imagePath)
+	if err != nil {
+		log.Error("failed to get original image from origin", slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	image := bimg.NewImage(originalImage)
 	bimgOptions := bimg.Options{
-		Width: opts.Width,
-		Height: opts.Height,
+		Width:   opts.Width,
+		Height:  opts.Height,
 		Quality: opts.Quality,
 	}
 
