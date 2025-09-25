@@ -11,7 +11,7 @@ import (
 
 	"github.com/elect0/chimera/internal/adapters/api"
 	"github.com/elect0/chimera/internal/config"
-	"github.com/elect0/chimera/internal/core/transformation"
+	"github.com/elect0/chimera/internal/application/transformation"
 	"github.com/elect0/chimera/internal/logger"
 )
 

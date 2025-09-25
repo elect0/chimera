@@ -15,12 +15,19 @@ type Config struct {
 	Log struct {
 		Level string `mapstructure:"level"`
 	} `mapstructure:"log"`
+	S3 struct {
+		Bucket string `mapstructure:"bucket"`
+		Region string `mapstructure:"region"`
+	} `mapstructure:"s3"`
 }
 
 func New() *Config {
 	viper.SetDefault("http_server.port", 8080)
 	viper.SetDefault("http_server.shutdown_timeout", "5s")
 	viper.SetDefault("log.level", "info")
+
+	viper.SetDefault("s3.bucket", "")
+	viper.SetDefault("region", "eu-central-1")
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -38,6 +45,10 @@ func New() *Config {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatalf("unable to decode into struct, %v", err)
+	}
+
+	if cfg.S3.Bucket == "" {
+		log.Fatal("s3.bucket configuration is missing")
 	}
 
 	return &cfg

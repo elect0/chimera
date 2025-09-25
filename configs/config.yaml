@@ -4,3 +4,7 @@ http_server:
 
 log:
   level: "debug"
+
+s3:
+  bucket: "chimera-originals-elect0-20250925"
+  region: "eu-central-1"
