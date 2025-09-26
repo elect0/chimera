@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/elect0/chimera/internal/adapters/api"
+	"github.com/elect0/chimera/internal/adapters/cache"
 	"github.com/elect0/chimera/internal/adapters/storage"
 	"github.com/elect0/chimera/internal/application/transformation"
 	"github.com/elect0/chimera/internal/config"
@@ -43,7 +44,14 @@ func main() {
 	}
 	log.Info("S3 origin repository initialized")
 
-	transformationService := transformation.NewService(log, originRepo)
+	cacheRepo, err := cache.NewRedisCacheRepository(context.Background(), cfg, log)
+	if err != nil {
+		log.Error("failed to create redis cache repository", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	log.Info("redis cache repository initialized")
+
+	transformationService := transformation.NewService(log, originRepo, cacheRepo)
 
 	apiHandler := api.NewHandler(transformationService, log)
 

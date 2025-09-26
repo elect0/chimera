@@ -8,3 +8,8 @@ log:
 s3:
   bucket: "chimera-originals-elect0-20250925"
   region: "eu-central-1"
+
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 0

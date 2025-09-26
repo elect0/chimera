@@ -2,28 +2,44 @@ package transformation
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/elect0/chimera/internal/domain"
 	"github.com/elect0/chimera/internal/ports"
 	"github.com/h2non/bimg"
+	"github.com/redis/go-redis/v9"
 )
 
 type Service struct {
 	log        *slog.Logger
 	originRepo ports.OriginRepository
+	cacheRepo  ports.CacheRepository
 }
 
-func NewService(log *slog.Logger, originRepo ports.OriginRepository) *Service {
+func NewService(log *slog.Logger, originRepo ports.OriginRepository, cacheRepo ports.CacheRepository) *Service {
 	return &Service{
 		log:        log,
 		originRepo: originRepo,
+		cacheRepo:  cacheRepo,
 	}
 }
 
 func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions, imagePath string) ([]byte, error) {
-	log := s.log.With(slog.String("imagePath", imagePath))
-	log.Debug("processing image request")
+
+	cacheKey := fmt.Sprintf("%s:w%d:h%d:q%d", imagePath, opts.Width, opts.Height, opts.Quality)
+	log := s.log.With(slog.String("cacheKey", cacheKey))
+
+	cachedImage, err := s.cacheRepo.Get(ctx, cacheKey)
+	if err == nil {
+		log.Info("cache hit")
+		return cachedImage, nil
+	}
+
+	if err != redis.Nil {
+		log.Error("error getting from cache", slog.String("error", err.Error()))
+	}
+	log.Info("cache miss")
 
 	originalImage, err := s.originRepo.Get(ctx, imagePath)
 	if err != nil {
@@ -43,6 +59,14 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		s.log.Error("failed to process image", slog.String("error", err.Error()))
 		return nil, err
 	}
+
+	go func() {
+		err := s.cacheRepo.Set(context.Background(), cacheKey, newImage)
+		if err != nil {
+			log.Error("failed to set item in cache", slog.String("error", err.Error()))
+		}
+		log.Info("successfully set item in cache")
+	}()
 
 	return newImage, nil
 }
