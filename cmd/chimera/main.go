@@ -53,7 +53,7 @@ func main() {
 
 	transformationService := transformation.NewService(log, originRepo, cacheRepo)
 
-	apiHandler := api.NewHandler(transformationService, log)
+	apiHandler := api.NewHandler(transformationService, log, cfg)
 
 	mux := http.NewServeMux()
 

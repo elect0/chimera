@@ -20,10 +20,13 @@ type Config struct {
 		Region string `mapstructure:"region"`
 	} `mapstructure:"s3"`
 	Redis struct {
-		Address string `mapstructure:"address"`
-		Password  string `mapstructure:"password"`
-		DB        int    `mapstructure:"int"`
+		Address  string `mapstructure:"address"`
+		Password string `mapstructure:"password"`
+		DB       int    `mapstructure:"int"`
 	} `mapstructure:"redis"`
+	Security struct {
+		HMACSecretKey string `mapstructure:"hmac_secret_key"`
+	} `mapstructure:"security"`
 }
 
 func New() *Config {
@@ -35,6 +38,8 @@ func New() *Config {
 	viper.SetDefault("region", "eu-central-1")
 
 	viper.SetDefault("redis.address", "localhost:6379")
+
+	viper.SetDefault("security.hmac_secret_key", "")
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")

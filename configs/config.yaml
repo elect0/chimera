@@ -13,3 +13,6 @@ redis:
   address: "localhost:6379"
   password: ""
   db: 0
+
+security:
+  hmac_secret_key: "voGtQVYeZF"
