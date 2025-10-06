@@ -26,6 +26,9 @@ type Config struct {
 	} `mapstructure:"redis"`
 	Security struct {
 		HMACSecretKey string `mapstructure:"hmac_secret_key"`
+		RemoteFetch   struct {
+			MaxDownloadSizeMB int `mapstructure:"max_download_size_mb"`
+		} `mapstructure:"remote_fetch"`
 	} `mapstructure:"security"`
 }
 

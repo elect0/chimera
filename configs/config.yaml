@@ -16,3 +16,6 @@ redis:
 
 security:
   hmac_secret_key: "voGtQVYeZF"
+
+  remote_fetch:
+    max_download_size_mb: 25
