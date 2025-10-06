@@ -37,12 +37,16 @@ func main() {
                                                                                                   
 		`)
 
-	originRepo, err := storage.NewS3OriginRepository(context.Background(), cfg, log)
+	s3OriginRepo, err := storage.NewS3OriginRepository(context.Background(), cfg, log)
 	if err != nil {
 		log.Error("failed to create S3 origin repository", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 	log.Info("S3 origin repository initialized")
+
+	httpOriginRepo := storage.NewHTTPOriginRepository(cfg, log)
+	log.Info("HTTP origin repository initialized")
+
 
 	cacheRepo, err := cache.NewRedisCacheRepository(context.Background(), cfg, log)
 	if err != nil {
@@ -51,7 +55,7 @@ func main() {
 	}
 	log.Info("redis cache repository initialized")
 
-	transformationService := transformation.NewService(log, originRepo, cacheRepo)
+	transformationService := transformation.NewService(log, s3OriginRepo, cacheRepo, httpOriginRepo)
 
 	apiHandler := api.NewHandler(transformationService, log, cfg)
 

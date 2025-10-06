@@ -13,18 +13,26 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 	start := time.Now()
 
 	query := r.URL.Query()
-	imagePath := query.Get("path")
-	width, _ := strconv.Atoi(query.Get("width"))
-	height, _ := strconv.Atoi(query.Get("height"))
-	quality, _ := strconv.Atoi(query.Get("quality"))
+	path := query.Get("path")
+	remoteURL := query.Get("url")
 
-	if imagePath == "" {
+	var imagePath string
+
+	if path != "" {
+		imagePath = path
+	} else if remoteURL != "" {
+		imagePath = remoteURL
+	} else {
 		http.Error(w, "invalid image path parameter", http.StatusBadRequest)
 		return
 	}
 
-	if width <= 0 {
-		http.Error(w, "invalid width parameter", http.StatusBadRequest)
+	width, _ := strconv.Atoi(query.Get("width"))
+	height, _ := strconv.Atoi(query.Get("height"))
+	quality, _ := strconv.Atoi(query.Get("quality"))
+
+	if width <= 0 && height <= 0 {
+		http.Error(w, "at least one of 'width' or 'height' parameters is invalid", http.StatusBadRequest)
 		return
 	}
 

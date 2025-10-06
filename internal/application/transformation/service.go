@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/elect0/chimera/internal/domain"
 	"github.com/elect0/chimera/internal/ports"
@@ -12,16 +13,18 @@ import (
 )
 
 type Service struct {
-	log        *slog.Logger
-	originRepo ports.OriginRepository
-	cacheRepo  ports.CacheRepository
+	log            *slog.Logger
+	s3OriginRepo   ports.OriginRepository
+	cacheRepo      ports.CacheRepository
+	httpOriginRepo ports.OriginRepository
 }
 
-func NewService(log *slog.Logger, originRepo ports.OriginRepository, cacheRepo ports.CacheRepository) *Service {
+func NewService(log *slog.Logger, originRepo ports.OriginRepository, cacheRepo ports.CacheRepository, httpRepo ports.OriginRepository) *Service {
 	return &Service{
-		log:        log,
-		originRepo: originRepo,
-		cacheRepo:  cacheRepo,
+		log:            log,
+		s3OriginRepo:   originRepo,
+		httpOriginRepo: httpRepo,
+		cacheRepo:      cacheRepo,
 	}
 }
 
@@ -41,8 +44,14 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 	}
 	log.Info("cache miss")
 
-	originalImage, err := s.originRepo.Get(ctx, imagePath)
-	if err != nil {
+	var originalImage []byte
+	if strings.HasPrefix(imagePath, "http") {
+		originalImage, err = s.httpOriginRepo.Get(ctx, imagePath)
+	} else {
+		originalImage, err = s.s3OriginRepo.Get(ctx, imagePath)
+	}
+
+ if err != nil {
 		log.Error("failed to get original image from origin", slog.String("error", err.Error()))
 		return nil, err
 	}
