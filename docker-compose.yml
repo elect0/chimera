@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: chimera-prometheus
+    ports:
+      - "9091:9090" 
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: chimera-grafana
+    ports:
+      - "3000:3000" 
+    depends_on:
+      - prometheus
