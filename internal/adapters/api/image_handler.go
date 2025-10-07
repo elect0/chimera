@@ -32,6 +32,7 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 	width, _ := strconv.Atoi(query.Get("width"))
 	height, _ := strconv.Atoi(query.Get("height"))
 	quality, _ := strconv.Atoi(query.Get("quality"))
+	cropStrategy := query.Get("crop")
 
 	targetType := h.negotiateFormat(r)
 
@@ -44,6 +45,7 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 		Width:      width,
 		Height:     height,
 		Quality:    quality,
+		Crop:       cropStrategy,
 		TargetType: targetType,
 	}
 

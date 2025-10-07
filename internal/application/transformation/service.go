@@ -51,7 +51,7 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		originalImage, err = s.s3OriginRepo.Get(ctx, imagePath)
 	}
 
- if err != nil {
+	if err != nil {
 		log.Error("failed to get original image from origin", slog.String("error", err.Error()))
 		return nil, err
 	}
@@ -61,7 +61,12 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		Width:   opts.Width,
 		Height:  opts.Height,
 		Quality: opts.Quality,
-		Type: opts.TargetType,
+		Crop:    true,
+		Type:    opts.TargetType,
+	}
+
+	if opts.Crop == "smart" {
+		bimgOptions.Gravity = bimg.GravitySmart
 	}
 
 	newImage, err := image.Process(bimgOptions)
