@@ -75,6 +75,41 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		return nil, err
 	}
 
+	if opts.Watermark.Path != "" {
+		s.log.Debug("watermark requested, fetching watermark image", slog.String("path", opts.Watermark.Path))
+
+		watermarkBuffer, err := s.s3OriginRepo.Get(ctx, opts.Watermark.Path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch watermark image: %w", err)
+		}
+
+		processedSize, err := bimg.Size(newImage)
+		if err != nil {
+			return nil, err
+		}
+		watermarkSize, err := bimg.Size(watermarkBuffer)
+		if err != nil {
+			return nil, err
+		}
+
+		top, left := calculateCoordinates(processedSize, watermarkSize, opts.Watermark.Position)
+
+		imageToWatermark := bimg.NewImage(newImage)
+
+		watermark := bimg.WatermarkImage{
+			Buf:     watermarkBuffer,
+			Opacity: opts.Watermark.Opacity,
+			Top:     top,
+			Left:    left,
+		}
+
+		newImage, err = imageToWatermark.WatermarkImage(watermark)
+		if err != nil {
+			s.log.Error("failed to apply watermark", slog.String("error", err.Error()))
+			return nil, err
+		}
+	}
+
 	go func() {
 		err := s.cacheRepo.Set(context.Background(), cacheKey, newImage)
 		if err != nil {
@@ -84,6 +119,30 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 	}()
 
 	return newImage, nil
+}
+
+func calculateCoordinates(baseSize, watermarkSize bimg.ImageSize, gravity bimg.Gravity) (top, left int) {
+	switch gravity {
+	case bimg.GravityNorth:
+		left = (baseSize.Width - watermarkSize.Width) / 2
+		top = 0
+	case bimg.GravitySouth:
+		left = (baseSize.Width - watermarkSize.Width) / 2
+		top = baseSize.Height - watermarkSize.Height
+	case bimg.GravityEast:
+		left = baseSize.Width - watermarkSize.Width
+		top = (baseSize.Height - watermarkSize.Height) / 2
+	case bimg.GravityWest:
+		left = 0
+		top = (baseSize.Height - watermarkSize.Height) / 2
+	case bimg.GravityCentre:
+		fallthrough
+	default:
+		// Default to center
+		left = (baseSize.Width - watermarkSize.Width) / 2
+		top = (baseSize.Height - watermarkSize.Height) / 2
+	}
+	return top, left
 }
 
 var _ ports.TransformationService = (*Service)(nil)

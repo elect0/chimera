@@ -36,6 +36,10 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 
 	targetType := h.negotiateFormat(r)
 
+	watermarkPath := query.Get("watermark")
+	wmOpacity, _ := strconv.ParseFloat(query.Get("wm_opacity"), 32)
+	wmPosStr := query.Get("wm_pos")
+
 	if width <= 0 && height <= 0 {
 		http.Error(w, "at least one of 'width' or 'height' parameters is invalid", http.StatusBadRequest)
 		return
@@ -47,6 +51,11 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 		Quality:    quality,
 		Crop:       cropStrategy,
 		TargetType: targetType,
+		Watermark: domain.WatermarkOptions{
+			Path:     watermarkPath,
+			Opacity:  float32(wmOpacity),
+			Position: mapGravity(wmPosStr),
+		},
 	}
 
 	processedImage, err := h.service.Process(r.Context(), opts, imagePath)
@@ -76,4 +85,19 @@ func (h *Handler) negotiateFormat(r *http.Request) bimg.ImageType {
 
 	h.log.Debug("client doesn't support neither WEBP nor AVIF, falling back to JPEG")
 	return bimg.JPEG
+}
+
+func mapGravity(pos string) bimg.Gravity {
+	switch pos {
+	case "north":
+		return bimg.GravityNorth
+	case "south":
+		return bimg.GravitySouth
+	case "east":
+		return bimg.GravityEast
+	case "west":
+		return bimg.GravityWest
+	default:
+		return bimg.GravityCentre
+	}
 }
