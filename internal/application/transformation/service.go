@@ -61,6 +61,7 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		Width:   opts.Width,
 		Height:  opts.Height,
 		Quality: opts.Quality,
+		Type: opts.TargetType,
 	}
 
 	newImage, err := image.Process(bimgOptions)

@@ -47,7 +47,6 @@ func main() {
 	httpOriginRepo := storage.NewHTTPOriginRepository(cfg, log)
 	log.Info("HTTP origin repository initialized")
 
-
 	cacheRepo, err := cache.NewRedisCacheRepository(context.Background(), cfg, log)
 	if err != nil {
 		log.Error("failed to create redis cache repository", slog.String("error", err.Error()))

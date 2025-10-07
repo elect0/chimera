@@ -25,7 +25,11 @@ func NewHandler(service ports.TransformationService, log *slog.Logger, cfg *conf
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/health", h.handleHealthCheck)
 
-	transformHandler := http.HandlerFunc(h.handleImageTransformation)
+	// transformHandler := http.HandlerFunc(h.handleImageTransformation)
 
-	mux.Handle("/transform", h.SignatureMiddleware(transformHandler))
+	mux.HandleFunc("/transform", h.handleImageTransformation)
+	h.log.Warn("HMAC signature validation is disabled")
+
+	/* 	mux.Handle("/transform", h.SignatureMiddleware(transformHandler)) */
+
 }

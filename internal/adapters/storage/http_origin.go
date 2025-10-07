@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/elect0/chimera/internal/config"
 	"github.com/elect0/chimera/internal/ports"
@@ -23,7 +24,7 @@ type HTTPOriginRepository struct {
 
 func NewHTTPOriginRepository(cfg *config.Config, log *slog.Logger) *HTTPOriginRepository {
 	client := &http.Client{
-		Timeout: 30,
+		Timeout: 10 * time.Second,
 	}
 
 	return &HTTPOriginRepository{
@@ -59,7 +60,7 @@ func (r *HTTPOriginRepository) Get(ctx context.Context, imageURL string) ([]byte
 		return nil, fmt.Errorf("remote server returned status code %d", resp.StatusCode)
 	}
 
-	maxSizeBytes := int64(r.cfg.Security.RemoteFetch.MaxDownloadSizeMB) * 1024
+	maxSizeBytes := int64(r.cfg.Security.RemoteFetch.MaxDownloadSizeMB) * 1024 * 1024
 	if resp.ContentLength > maxSizeBytes {
 		return nil, fmt.Errorf("remote file size (%d bytes) exceeds max limit", resp.ContentLength)
 	}

@@ -4,9 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/elect0/chimera/internal/domain"
+	"github.com/h2non/bimg"
 )
 
 func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Request) {
@@ -31,15 +33,18 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 	height, _ := strconv.Atoi(query.Get("height"))
 	quality, _ := strconv.Atoi(query.Get("quality"))
 
+	targetType := h.negotiateFormat(r)
+
 	if width <= 0 && height <= 0 {
 		http.Error(w, "at least one of 'width' or 'height' parameters is invalid", http.StatusBadRequest)
 		return
 	}
 
 	opts := domain.TransformationOptions{
-		Width:   width,
-		Height:  height,
-		Quality: quality,
+		Width:      width,
+		Height:     height,
+		Quality:    quality,
+		TargetType: targetType,
 	}
 
 	processedImage, err := h.service.Process(r.Context(), opts, imagePath)
@@ -48,8 +53,25 @@ func (h *Handler) handleImageTransformation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Content-Type", "image/"+bimg.ImageTypeName(targetType))
 	w.Write(processedImage)
 
 	h.log.Info("request processed successfully", slog.Duration("duration", time.Since(start)), slog.Int("status", http.StatusOK), slog.String("path", r.URL.Path))
+}
+
+func (h *Handler) negotiateFormat(r *http.Request) bimg.ImageType {
+	acceptHeader := r.Header.Get("Accept")
+
+	if strings.Contains(acceptHeader, "image/avif") {
+		h.log.Debug("client supports AVIF, selecting AVIF")
+		return bimg.AVIF
+	}
+
+	if strings.Contains(acceptHeader, "image/webp") {
+		h.log.Debug("client supports WEBP, selecting WEBP")
+		return bimg.WEBP
+	}
+
+	h.log.Debug("client doesn't support neither WEBP nor AVIF, falling back to JPEG")
+	return bimg.JPEG
 }
