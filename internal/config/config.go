@@ -25,6 +25,7 @@ type Config struct {
 		DB       int    `mapstructure:"int"`
 	} `mapstructure:"redis"`
 	Security struct {
+		HMACEnabled   bool   `mapstructure:"hmac_enabled"`
 		HMACSecretKey string `mapstructure:"hmac_secret_key"`
 		RemoteFetch   struct {
 			MaxDownloadSizeMB int `mapstructure:"max_download_size_mb"`
@@ -43,6 +44,7 @@ func New() *Config {
 	viper.SetDefault("redis.address", "localhost:6379")
 
 	viper.SetDefault("security.hmac_secret_key", "")
+	viper.SetDefault("security.hmac_enabled", true)
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")

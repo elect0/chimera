@@ -15,7 +15,24 @@ import (
 	"github.com/elect0/chimera/internal/application/transformation"
 	"github.com/elect0/chimera/internal/config"
 	"github.com/elect0/chimera/internal/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+func serveMetrics(log *slog.Logger) {
+	log.Info("starting metric server", slog.String("port", "9090"))
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	server := &http.Server{
+		Addr:    ":9090",
+		Handler: mux,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		log.Error("metrics server failed to start", slog.String("error", err.Error()))
+	}
+}
 
 func main() {
 	cfg := config.New()
@@ -77,6 +94,8 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	go serveMetrics(log)
 
 	sig := <-quit
 	log.Info("received shutdown signal", slog.String("signal", sig.String()))

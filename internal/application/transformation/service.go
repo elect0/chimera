@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/elect0/chimera/internal/domain"
+	"github.com/elect0/chimera/internal/metrics"
 	"github.com/elect0/chimera/internal/ports"
 	"github.com/h2non/bimg"
 	"github.com/redis/go-redis/v9"
@@ -36,6 +37,7 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 	cachedImage, err := s.cacheRepo.Get(ctx, cacheKey)
 	if err == nil {
 		log.Info("cache hit")
+		metrics.CacheHitTotals.Inc()
 		return cachedImage, nil
 	}
 
@@ -43,6 +45,7 @@ func (s *Service) Process(ctx context.Context, opts domain.TransformationOptions
 		log.Error("error getting from cache", slog.String("error", err.Error()))
 	}
 	log.Info("cache miss")
+	metrics.CacheMissesTotal.Inc()
 
 	var originalImage []byte
 	if strings.HasPrefix(imagePath, "http") {
