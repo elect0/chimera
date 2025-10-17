@@ -22,7 +22,7 @@ chimera is a high concurrency service written in go for dealing with on-the-fly 
       level: "info"
     
     s3:
-      // fill in your details about your bucket
+      # fill in your details about your bucket
       bucket: "your_bucket"
       region: "your_region"
     
@@ -32,7 +32,7 @@ chimera is a high concurrency service written in go for dealing with on-the-fly 
       db: 0
     
     security:
-      // generate a strong key
+      # generate a strong key
       hmac_enabled: false
       hmac_secret_key: "secret_key"
       remote_fetch:
